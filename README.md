@@ -1,3 +1,4 @@
+![](.github/istio.png)
 ## Istio (Service Mesh)
 
 ### O que é Service Mesh
@@ -194,4 +195,80 @@ grafana-56bdf8bf85-z644q                1/1     Running   0          112s
 Acesse o painel do Kiali.
 ```bash
 istioctl dashboard kiali
+```
+### Gerenciamento de Tráfego com Istio
+![](./.github/gerenciamento-trafego.png)
+
+#### Ingress Gateway
+- Recebe requisições externas
+- Liberação de Portas, Certificados...
+- Não é responsável por rotear o tráfego, isso é tarefa do Virtual Service
+
+#### Virtual Service
+Um Virtual Service permite você configurar como as requisições serão roteadas para um serviço. Ela possui uma série de regras que quando aplicadas farão com que a requisição seja direcionada ao destino correto.
+
+- Não é o virtual service do Kubernetes, ambos são complementares
+- Roteamento de tráfego
+- Match de url
+- Retries
+- Fault Injection
+- Timeout
+- Subsets (v1 e v1) Categorias de destinos. **Subsets realizam o link entre as regras do virtual service com as configurações do destinations rules**
+- Configura os proxies para ser possivel modificar o tráfego
+
+#### Destination Rule
+Você pode pensar nos virtual services como uma forma para rotear tráfego, e então você usa as **destination rules** para configurar o que acontece com o tráfego quando ele chega ao destino.
+
+- Aplica configurações de tráfego de acordo com os Subsets
+- Selector
+- Mantem regras de Load Balancer
+- Regras de Localidade (Locality)
+- Circuit Breaker
+
+#### Gateway
+Gerencia a entrada e saída do tráfego. TRabalha nos layers 4-6, garantindo o gerenciamento de portas, e TLS. É conectado a um Virtual Service que será responsável pelo roteamento.
+
+- Ingress - Tráfego de entrada
+- Egress - Tráfego de saída
+
+### Versões de Deployment
+```bash
+> kubectl apply -f deployment.yaml
+
+> kubectl get po
+NAME                       READY   STATUS    RESTARTS   AGE
+nginx-b-7d8d5d8f49-wzds8   2/2     Running   0          32s
+nginx-5b4595f479-g4dj7     2/2     Running   0          32s
+
+> kubectl get svc
+NAME            TYPE           CLUSTER-IP     EXTERNAL-IP                        PORT(S)          AGE
+kubernetes      ClusterIP      10.43.0.1      <none>                             443/TCP          2d4h
+nginx-service   LoadBalancer   10.43.40.173   172.23.0.2,172.23.0.3,172.23.0.4   8000:30000/TCP   54s
+
+> while true; do curl http://localhost:8000; echo; sleep 0.5; done;
+Full Cycle A
+Full Cycle A
+Full Cycle A
+Full Cycle B
+Full Cycle A
+Full Cycle B
+Full Cycle A
+Full Cycle A
+Full Cycle B
+Full Cycle B
+Full Cycle B
+Full Cycle B
+Full Cycle B
+```
+
+![](.github/example-1.png)
+
+### Deploy canario com Istio
+
+**Deployment Fortio**
+https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/#adding-a-client
+```bash
+> kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/httpbin/sample-client/fortio-deploy.yaml
+
+> kubectl exec "$FORTIO_POD" -c fortio -- fortio load -c 2 -qps 0 -t 200s -loglevel Warning http://nginx-service:8000
 ```
