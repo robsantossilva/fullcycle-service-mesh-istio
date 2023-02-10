@@ -270,5 +270,54 @@ https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/#adding-a
 ```bash
 > kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.16/samples/httpbin/sample-client/fortio-deploy.yaml
 
+> export FORTIO_POD=$(kubectl get pods -l app=fortio -o 'jsonpath={.items[0].metadata.name}')
+
 > kubectl exec "$FORTIO_POD" -c fortio -- fortio load -c 2 -qps 0 -t 200s -loglevel Warning http://nginx-service:8000
+```
+
+### Criando Virtual Service e Destination Rules
+
+```bash
+kubectl apply -f vs.yaml
+kubectl apply -f dr.yaml
+```
+
+[vs.yaml](vs.yaml)
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx-vs
+spec:
+  hosts:
+    - nginx-service
+  http:
+    - route:
+      - destination:
+          host: nginx-service
+          subset: v1
+        weight: 90
+
+      - destination:
+          host: nginx-service
+          subset: v2
+        weight: 10
+
+```
+
+[dr.yaml](dr.yaml)
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nginx-dr
+spec:
+  host: nginx-service
+  subsets:
+    - name: v1
+      labels:
+        version: A
+    - name: v2
+      labels:
+        version: B
 ```
