@@ -321,3 +321,24 @@ spec:
       labels:
         version: B
 ```
+
+### Tipos de LoadBalancer
+
+**Round-Robin (Algoritmo Padrão)**
+Nesse modelo, há uma distribuição por igual entre todos os componentes do cluster. Isso significa que todas as requisições que chegam ao balanceador de cargas são encaminhadas igualmente entre todos os players da composição do servidor.
+
+**Random**
+As solicitações são encaminhadas aleatoriamente para instâncias no pool.
+
+**Least requests**
+As solicitações são encaminhadas para instâncias com o menor número de solicitações.
+
+**Weighted**
+As solicitações são encaminhadas para instâncias no pool de acordo com uma porcentagem específica.
+
+[dr.yaml](dr.yaml)
+```yaml
+trafficPolicy:
+  loadBalancer:
+    simple: ROUND_ROBIN
+```
