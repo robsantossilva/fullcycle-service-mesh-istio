@@ -342,3 +342,57 @@ trafficPolicy:
   loadBalancer:
     simple: ROUND_ROBIN
 ```
+
+### Sticky Session e Consistent Hash
+**Sticky session** (também conhecida como afinidade de sessão), que permite que o load balancer vincule a sessão de um usuário a uma instância específica. Isso garante que todas as solicitações do usuário durante a sessão sejam enviadas para a mesma instância.
+
+**Consistent Hash** 
+É uma tecnica utilizada para identificar um cliente baseado em cookie, IP, etc.. e apartir dessa informação é gerado um hash unico, e esse hash é vinculado a uma inatancia/versão de uma aplicação.
+Esse recurso funciona apenas quando não é utilizado o tipo de load balancer **Weighted**
+
+Formas de gerar um Hash
+- httpHeaderName
+- httpCookie
+- UseSourceIP
+- httpQueryParameterName
+
+[consistent-hash.yaml](consistent-hash.yaml)
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx-vs
+spec:
+  hosts: 
+  - nginx-service
+  http:
+    - route:  
+      - destination:
+          host: nginx-service
+          subset: all
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nginx-dr
+spec:
+  host: nginx-service
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "x-user"
+  subsets:
+    - name: all
+      labels:
+        app: nginx
+```
+
+```bash
+> kubectl apply -f consistent-hash.yaml
+
+> kubectl exec -it nginx-6777658b9b-szth7 -- bash
+
+> curl --header "x-user: robson" http://nginx-service:8000
+Full Cycle B
+```
