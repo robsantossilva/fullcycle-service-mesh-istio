@@ -396,3 +396,53 @@ spec:
 > curl --header "x-user: robson" http://nginx-service:8000
 Full Cycle B
 ```
+
+### Fault injection na prática
+[fault-injection.yaml](fault-injection.yaml)
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx-vs
+spec:
+  hosts: 
+  - nginx-service
+  http:
+    - fault:
+        delay:
+          fixedDelay: 10s
+          percentage:
+            value: 50
+        # abort:
+        #   httpStatus: 504
+        #   percentage:
+        #     value: 100
+      route:  
+      - destination:
+          host: nginx-service
+          subset: all
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: nginx-dr
+spec:
+  host: nginx-service
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "x-user"
+  subsets:
+    - name: all
+      labels:
+        app: nginx
+```
+```bash
+> kubectl apply -f fault-injection.yaml
+
+> kubectl exec -it nginx-6777658b9b-7w2gx -- bash
+
+> curl --header "x-user: robson" http://nginx-service:8000
+Full Cycle B
+```
