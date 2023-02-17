@@ -446,3 +446,24 @@ spec:
 > curl --header "x-user: robson" http://nginx-service:8000
 Full Cycle B
 ```
+
+### Circuit Breaker
+
+Retornar erro 5xx é melhor do que manter uma conexão presa e com isso aumentando a latencia e derrubando outras aplicações.
+
+Circuit breaker possibilita que a aplicação, com lentidão, consiga se recuperar e evitar problemas maiores.
+
+[circuit-breaker/k8s/deployment.yaml](circuit-breaker/k8s/deployment.yaml)
+
+```bash
+kubectl apply -f circuit-breaker/k8s/deployment.yaml
+```
+
+```bash
+> export FORTIO_POD=$(kubectl get pods -l app=fortio -o 'jsonpath={.items[0].metadata.name}')
+
+> kubectl exec "$FORTIO_POD" -c fortio -- fortio load -c 2 -qps 0 -n 20 -loglevel Warning http://servicex-service:80
+
+Code 200 : 14 (70.0 %)
+Code 504 : 6 (30.0 %)
+```
