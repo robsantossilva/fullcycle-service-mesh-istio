@@ -467,3 +467,59 @@ kubectl apply -f circuit-breaker/k8s/deployment.yaml
 Code 200 : 14 (70.0 %)
 Code 504 : 6 (30.0 %)
 ```
+
+---
+
+```bash
+kubectl apply -f circuit-breaker/k8s/circuit-breaker.yaml
+```
+```bash
+> export FORTIO_POD=$(kubectl get pods -l app=fortio -o 'jsonpath={.items[0].metadata.name}')
+
+> kubectl exec "$FORTIO_POD" -c fortio -- fortio load -c 2 -qps 0 -n 50 -loglevel Warning http://servicex-service:80
+
+Code 200 : 45 (90.0 %)
+Code 504 : 5 (10.0 %)
+```
+
+### Iniciando com Gateways
+
+**Comunicação externa e/ou entre services acontecem através de proxies**
+
+#### Configurando Ingress Gateway
+```bash
+> kubectl get pods -n istio-system
+
+> ...
+istio-ingressgateway-7cf5c5849d-7j7cq   1/1     Running   12 (7h43m ago)   25h
+```
+
+```bash
+> kubectl get svc -n istio-system
+
+> ...
+istio-ingressgateway   LoadBalancer   10.43.215.188   172.23.0.2,172.23.0.3,172.23.0.4   15021:30590/TCP,80:31385/TCP,443:30466/TCP,31400:30391/TCP,15443:30546/TCP   25h
+```
+
+[gateway.yaml](gateway.yaml)
+
+#### Alterando nginx-service
+[deployment.yaml](deployment.yaml)
+```yaml
+nodePort: 30000 > 30001
+```
+
+#### Editar porta destino do ingress gateway
+```bash
+> kubectl edit svc istio-ingressgateway -n istio-system
+```
+
+```yaml
+  - name: http2
+    nodePort: 30000
+    port: 80
+```
+
+```bash
+> kubectl apply -f gateway.yaml
+```

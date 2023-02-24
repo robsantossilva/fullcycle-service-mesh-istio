@@ -57,6 +57,6 @@ spec:
   selector:
     app: nginx
   ports:
-  - port: 8000 #Porta para acessar o cluster k3s
+  - port: 8000 #Porta do Service
+    nodePort: 30001 #Porta para acessar o cluster k3s
     targetPort: 80 #Porta do POD
-    nodePort: 30000 #Porta do Service
