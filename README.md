@@ -484,6 +484,10 @@ Code 504 : 5 (10.0 %)
 
 ### Iniciando com Gateways
 
+**Fluxo até o POD**
+
+[localhost:8000] **>>>** [Node:3000] **>>>** [IngressGateway:80]
+
 **Comunicação externa e/ou entre services acontecem através de proxies**
 
 #### Configurando Ingress Gateway
@@ -523,3 +527,32 @@ nodePort: 30000 > 30001
 ```bash
 > kubectl apply -f gateway.yaml
 ```
+
+
+#### Trabalhando com prefixos
+```yaml
+...
+kind: VirtualService
+...
+  http:
+    - match:
+      - uri:
+          prefix: "/b"
+      route:
+      - destination:
+          host: nginx-service
+          subset: v2
+
+```
+
+### Configuration subdomain
+[gateway-domains.yaml](gateway-domains.yaml)
+```bash
+> kubectl apply -f gateway-domains.yaml
+```
+
+http://a.fullcycle:8000/
+>> Full Cycle A
+
+http://b.fullcycle:8000/
+>> Full Cycle B

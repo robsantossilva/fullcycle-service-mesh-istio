@@ -11,7 +11,7 @@ spec:
         name: http
         protocol: http2
       hosts:
-      - "*"
+      - "*.fullcycle"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -19,35 +19,29 @@ metadata:
   name: nginx-vs
 spec:
   hosts: 
-  - "*"
+  - "a.fullcycle"
   gateways:
   - ingress-gateway-k3s
   http:
-    - match:
-      - uri:
-          prefix: "/b"
-      route:
-      - destination:
-          host: nginx-service
-          subset: v2
-
-    - match:
-      - uri:
-          prefix: "/"
-      route:
+    - route:  
       - destination:
           host: nginx-service
           subset: v1
-
-    # - route:  
-    #   - destination:
-    #       host: nginx-service
-    #       subset: v1
-    #     weight: 100
-    #   - destination:
-    #       host: nginx-service
-    #       subset: v2
-    #     weight: 0
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: nginx-vs-b
+spec:
+  hosts: 
+  - "b.fullcycle"
+  gateways:
+  - ingress-gateway-k3s
+  http:
+    - route:  
+      - destination:
+          host: nginx-service
+          subset: v2
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
